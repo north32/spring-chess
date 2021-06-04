@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body style="font-family: sans-serif">
+<p>Session section:</p>
+<form id="tokenForm">
+    <label>Token: <input id="token" type="text"></label>
+    <br><br>
+    <button type="submit">Submit</button>
+</form>
+<br><br>
+<p>Move section:</p>
+<form id="moveForm">
+    <label>From: <input id="from" type="text"></label>
+    <br>
+    <label>To: <input id="to" type="text"></label>
+    <br>
+    <label>Promotion: <input id="promotion" type="text"></label>
+    <br><br>
+    <button type="submit">Submit</button>
+</form>
+</body>
+<script>
+    let ws;
+    function tokenSubmit(event) {
+        const token = document.getElementById('token');
+        // Web socket stuff
+        ws = new WebSocket('ws://localhost:8080/session/' + token.value);
+        ws.onmessage = function (event) {
+            console.log(event.data);
+        }
+        ws.onopen = function (event) {
+            console.log('ws opened');
+        };
+        // ws.send('here we are');
+        // event stuff
+        event.preventDefault();
+    }
+
+    function moveSubmit(event) {
+        console.log('here')
+        if (ws === undefined) {
+            return;
+        }
+        const from = document.getElementById('from');
+        const to = document.getElementById('to')
+        const promotion = document.getElementById('promotion')
+        const move = {
+            'move': {
+                'from': from.value,
+                'to': to.value
+            }
+        }
+        ws.send(JSON.stringify(move));
+        event.preventDefault();
+    }
+
+    const tokenForm = document.getElementById('tokenForm');
+    tokenForm.addEventListener('submit', tokenSubmit);
+
+    const moveForm = document.getElementById('moveForm');
+    moveForm.addEventListener('submit', moveSubmit);
+
+    const dataToSend = JSON.stringify({"mode": "PLAYER_VS_MACHINE"});
+
+    fetch("/game/create", {
+        credentials: "same-origin",
+        mode: "same-origin",
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        body: dataToSend
+    }).then(data => {
+        data.text()
+            .then(d => {
+                const token = document.getElementById('token');
+                token.value = d;
+            });
+    });
+
+</script>
+</html>
